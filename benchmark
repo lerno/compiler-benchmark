@@ -876,6 +876,9 @@ zig_no_llvm_build_flags = ['-fno-llvm', '-fno-lld', '-fno-clang'] # See https://
 
 def bm_Zig(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Zig'
+    cexe = match_lang_cexe(args, lang, 'zig')
+    if not cexe:
+        return
     if op == 'ast-check':       # full syntactic analysis and partial semantic analysis
         cexe_flags = ['ast-check']
         out_flag_and_exe = []
@@ -890,20 +893,18 @@ def bm_Zig(results: Results, code_paths, args: argparse.Namespace, op, templated
         out_flag_and_exe = ['--name', out_binary(lang)]
     else:
         return None
-    cexe = match_lang_cexe(args, lang, 'zig')
-    if cexe:
-        version = sp.run([cexe, 'version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[0]
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,  # no syntax flag currently so compile to object file instead
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    version = sp.run([cexe, 'version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[0]
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,  # no syntax flag currently so compile to object file instead
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Odin(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
