@@ -1356,8 +1356,9 @@ def compile_file(code_paths: list,
         if runner and lang != 'Python':
             if runner is True:      # binary should be runnable
                 if (cexe.endswith('cproc')):  # cproc forgets to set executable bit
-                    st = os.stat(cexe)
-                    os.chmod(outb, st.st_mode | stat.S_IEXEC)
+                    outb_path = os.path.join(abs_lang_dir, outb)
+                    st = os.stat(outb_path)
+                    os.chmod(outb_path, st.st_mode | stat.S_IEXEC)
                 run_dur_min = run_compiled_file(os.path.join(lang_dir, outb))
             elif isinstance(runner, list):
                 run_dur_min = run_compiled_file(runner + [outb])
