@@ -749,25 +749,26 @@ def bm_Go_using_gccgo(results: Results, code_paths, args: argparse.Namespace, op
 def bm_Swift(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Swift'
     cexe = match_lang_cexe(args, lang, 'swiftc')
+    if not cexe:
+        return
     if op == 'build':
         cexe_flags = ['']
     elif op == 'check':
         cexe_flags = ['-typecheck']
     else:
         return None
-    if cexe:
-        version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
-        compile_file(code_paths,
-                     out_flag_and_exe=['-o', out_binary(lang)],
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
+    compile_file(code_paths,
+                 out_flag_and_exe=['-o', out_binary(lang)],
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Hylo(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
