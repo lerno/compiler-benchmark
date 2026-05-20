@@ -846,29 +846,30 @@ def bm_V(results: Results, code_paths, args: argparse.Namespace, op, templated: 
 def bm_C3(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'C3'
     cexe = (match_lang_cexe(args, lang, 'c3c') or which(os.path.join(HOME, 'ware/c3c/build/c3c')))
-    if cexe:
-        cexe_flags = ['-q', '-O0']
-        if op == 'check':
-            cexe_flags += ['compile-only'] + ['-C']
-            out_flag_and_exe = []
-        elif op == 'compile':
-            cexe_flags += ['compile-only']
-            out_flag_and_exe = []
-        else:
-            cexe_flags += ['compile']
-            out_flag_and_exe = ['-o', out_binary(lang)]
-        version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split(':')[1].split()[0]
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    if not cexe:
+        return
+    cexe_flags = ['-q', '-O0']
+    if op == 'check':
+        cexe_flags += ['compile-only'] + ['-C']
+        out_flag_and_exe = []
+    elif op == 'compile':
+        cexe_flags += ['compile-only']
+        out_flag_and_exe = []
+    else:
+        cexe_flags += ['compile']
+        out_flag_and_exe = ['-o', out_binary(lang)]
+    version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split(':')[1].split()[0]
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 zig_no_llvm_build_flags = ['-fno-llvm', '-fno-lld', '-fno-clang'] # See https://stackoverflow.com/a/78995648/683710 and https://github.com/ziglang/zig/issues/6251
