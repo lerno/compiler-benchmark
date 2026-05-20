@@ -109,7 +109,7 @@ if should_install "llvm"; then
     fi
 fi
 
-# --- 7. Repository Languages (Java, Julia, OCaml, Python, Scheme, TCC) ---
+# Repository Languages (Java, Julia, OCaml, Python, Scheme, TCC)
 if should_install "repo"; then
     echo ">> Installing Repository Languages..."
     if [ "$OS" == "arch" ]; then
