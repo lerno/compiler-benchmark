@@ -644,7 +644,7 @@ def bm_Vox(results: Results, code_paths, args: argparse.Namespace, op, templated
                  results=results)
 
 
-def bm_CSharp_using_mono(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
+def bm_CSharp_using_mcs(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'C#'
     cexe = match_lang_cexe(args, lang, 'mcs')
     if not cexe:
@@ -669,15 +669,28 @@ def bm_CSharp_using_csc(results: Results, code_paths, args: argparse.Namespace, 
     cexe = match_lang_cexe(args, lang, 'csc')
     if not cexe:
         return
-    cexe_flags = ['-target:exe'] + ([] if op == 'build' else [''])
-    version = sp.run([cexe, '-version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[0]
+
+    cexe_flags = ['-target:exe']
+
+    # If operation is 'check', use -refonly to speed up processing
+    # and skip full executable generation logic.
+    if op == 'check':
+        cexe_flags.append('-refonly')
+
+    # Extract version
+    try:
+        version_proc = sp.run([cexe, '-version'], stdout=sp.PIPE, stderr=sp.STDOUT)
+        version = version_proc.stdout.decode('utf-8').split()[0]
+    except (IndexError, sp.CalledProcessError):
+        version = "unknown"
+
     compile_file(code_paths,
                  out_flag_and_exe=['-out:' + out_binary(lang)],
                  cexe=cexe,
                  runner=True,
                  cexe_flags=cexe_flags,
                  args=args,
-                 op=op,
+                 op=op, # Passes 'build' or 'check'
                  compiler_version=version,
                  lang=lang,
                  templated=templated,
@@ -2234,8 +2247,10 @@ def main():
                 bm_Nim(results=results, code_paths=code_paths, args=args, op='build', templated=templated)
 
     if 'C#' in args.language_exes:
+        if 'check' in args.operations:
+            bm_CSharp_using_csc(results=results, code_paths=code_paths, args=args, op='check', templated=False)
         if 'build' in args.operations:
-            bm_CSharp_using_mono(results=results, code_paths=code_paths, args=args, op='build', templated=False)
+            bm_CSharp_using_mcs(results=results, code_paths=code_paths, args=args, op='build', templated=False)
             bm_CSharp_using_csc(results=results, code_paths=code_paths, args=args, op='build', templated=False)
 
     if 'Java' in args.language_exes:
