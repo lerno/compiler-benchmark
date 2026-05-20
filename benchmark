@@ -1163,36 +1163,38 @@ def bm_Java(results: Results, code_paths, args: argparse.Namespace, op, template
 def bm_Pareas(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Pareas'
     cexe = match_lang_cexe(args, lang, 'pareas')
-    if cexe:
-        compile_file(code_paths,
-                     out_flag_and_exe=['-o', out_binary(lang)],
-                     cexe=cexe,
-                     runner=False,
-                     cexe_flags=['--check'] if op == 'check' else [],
-                     args=args,
-                     op=op,
-                     compiler_version='unknown',
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    if not cexe:
+        return None
+    compile_file(code_paths,
+                 out_flag_and_exe=['-o', out_binary(lang)],
+                 cexe=cexe,
+                 runner=False,
+                 cexe_flags=['--check'] if op == 'check' else [],
+                 args=args,
+                 op=op,
+                 compiler_version='unknown',
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Julia(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Julia'
     cexe = match_lang_cexe(args, lang, 'julia')
-    if cexe:
-        version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
-        compile_file(code_paths,
-                     out_flag_and_exe=[],
-                     cexe=cexe,
-                     runner=False,
-                     cexe_flags=JULIA_FLAGS,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    if not cexe:
+        return None
+    version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
+    compile_file(code_paths,
+                 out_flag_and_exe=[],
+                 cexe=cexe,
+                 runner=False,
+                 cexe_flags=JULIA_FLAGS,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def compile_file(code_paths: list,
