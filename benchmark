@@ -359,6 +359,9 @@ def bm_Ada_using_gcc(results: Results, lang: str, code_paths: list, args: list, 
 
 
 def bm_C_using_cproc(results: Results, lang: str, code_paths: list, args: argparse.Namespace, op: str, templated: bool):
+    cexe = match_lang_cexe(args, lang, 'cproc')
+    if not cexe:
+        return
     if op == 'check':
         cexe_flags = ['-emit-qbe']
         out_flag_and_exe = ['-o', '/dev/null']
@@ -377,20 +380,18 @@ def bm_C_using_cproc(results: Results, lang: str, code_paths: list, args: argpar
         # return False
     else:
         return None
-    cexe = match_lang_cexe(args, lang, 'cproc')
-    if cexe:
-        version = 'unknown'
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=(op == 'build'),
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    version = 'unknown'
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=(op == 'build'),
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_C_using_tcc(results: Results, lang: str, code_paths: list, args: argparse.Namespace, op: str, templated: bool):
