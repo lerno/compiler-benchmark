@@ -905,6 +905,13 @@ def bm_Odin(results: Results, code_paths, args: argparse.Namespace, op, template
 
 def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Python'
+    cexe = match_lang_cexe(args, lang, 'python3') or \
+        match_lang_cexe(args, lang, 'python') or \
+        match_lang_cexe(args, lang, 'pypy3') or \
+        match_lang_cexe(args, lang, 'pypy')
+
+    if not cexe:
+        return None
 
     if op == 'build':
         # Python is interpreted, but we can compile to bytecode
@@ -919,14 +926,6 @@ def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templa
         out_flag_and_exe = []
     else:
         return None
-
-    cexe = match_lang_cexe(args, lang, 'python3')
-    if not cexe:
-        cexe = match_lang_cexe(args, lang, 'python')
-    if not cexe:
-        cexe = match_lang_cexe(args, lang, 'pypy3')
-    if not cexe:
-        cexe = match_lang_cexe(args, lang, 'pypy')
 
     if cexe:
         version_output = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.PIPE)
