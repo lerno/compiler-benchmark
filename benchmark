@@ -691,6 +691,9 @@ def bm_Go(results: Results, code_paths, args: argparse.Namespace, op, templated:
 
 def bm_Go_using_go(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Go'
+    cexe = match_lang_cexe(args, lang, cexe)
+    if not cexe:
+        return
     version = None              # unknown
     if op == 'build':
         cexe = which('go')
@@ -708,19 +711,17 @@ def bm_Go_using_go(results: Results, code_paths, args: argparse.Namespace, op, t
         out_flag_and_exe = []
     else:
         return None
-    cexe = match_lang_cexe(args, lang, cexe)
-    if cexe:
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Go_using_gccgo(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
