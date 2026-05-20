@@ -1347,24 +1347,14 @@ def compile_file(code_paths: list,
 
 
 def run_compiled_file(args: argparse.Namespace, run_count=1):
-    durs = []                  # compilation durations
+    durs = []
     for _ in range(0, run_count):
-        cstart = timer()        # compilation start
-        # print("args:", args)
-        with sp.Popen(args,
-                      stdout=sp.PIPE,
-                      stderr=sp.PIPE) as comp_proc:
-            outs, errs = comp_proc.communicate()
-            # pprint(comp_proc.__dict__)
-            # TODO detect segfault exit code
-            # if comp_proc.returncode != 0:
-            #     print("WARNING: Run of compiled exec `" + str(args) +
-            #           "` exited with return code " + str(comp_proc.returncode),
-            #           file=sys.stderr)
-            #     return None
-            durs.append(timer() - cstart)
-    dur_min = min(durs)         # running duration minimum
-    return dur_min
+        cstart = timer()
+        # We use check=False because for these benchmarks,
+        # the exit code is often the calculated sum, not an error.
+        sp.run(args, stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+        durs.append(timer() - cstart)
+    return min(durs) if durs else None
 
 
 def long_type_of_lang(lang):
