@@ -147,7 +147,11 @@ fi
 
 if should_install "nim"; then
     echo ">> Installing Nim..."
-    curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+    if [ "$OS" == "arch" ]; then
+        ${PKG_MAN} nim
+	else
+		curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+	fi
 fi
 
 if should_install "rust"; then
