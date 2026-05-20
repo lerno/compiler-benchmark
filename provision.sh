@@ -236,6 +236,14 @@ if should_install "cproc"; then
     rm -rf "$CPROC_TMP"
 fi
 
+if should_install "cuik"; then
+    echo ">> Building Cuik..."
+    CUIK_TMP=$(mktemp -d)
+    git clone --depth 1 https://github.com/RealNeGate/Cuik/ "$CUIK_TMP"
+    pushd "$CUIK_TMP"
+	luajit build.lua -x64 -driver -cuik -tb
+fi
+
 # --- Finalization ---
 echo "--------------------------------------------------------"
 echo "✅ Requested installations complete for $OS!"
