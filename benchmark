@@ -774,6 +774,8 @@ def bm_Swift(results: Results, code_paths, args: argparse.Namespace, op, templat
 def bm_Hylo(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Hylo'
     cexe = match_lang_cexe(args, lang, 'hc')
+    if not cexe:
+        return
     if op == 'build':
         cexe_flags = []
         out_flag_and_exe = ['-o', out_binary(lang)]
@@ -782,21 +784,20 @@ def bm_Hylo(results: Results, code_paths, args: argparse.Namespace, op, template
         out_flag_and_exe = []
     else:
         return None
-    if cexe:
-        # Extract version string from 'hc --version'
-        version_run = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.PIPE)
-        version = version_run.stdout.decode('utf-8').split()[-1]
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    # Extract version string from 'hc --version'
+    version_run = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.PIPE)
+    version = version_run.stdout.decode('utf-8').split()[-1]
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_OCaml(results: Results, code_paths, args: argparse.Namespace, op, templated: bool, bytecode):
