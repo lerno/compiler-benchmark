@@ -937,7 +937,7 @@ def bm_Odin(results: Results, code_paths, args: argparse.Namespace, op, template
                  results=results)
 
 
-def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
+def bm_Python(results: Results, code_paths: list, args: argparse.Namespace, op: str, templated: bool):
     lang = 'Python'
 
     cexe = match_lang_cexe(args, lang, 'python3') or \
@@ -947,19 +947,12 @@ def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templa
     if not cexe:
         return None
 
-    if op == 'build':
-        # Python is interpreted, but we can compile to bytecode
+    if op in ('build', 'check'):
+        # Both build and check use py_compile to avoid full execution
         cexe_flags = ['-m', 'py_compile']
-        out_flag_and_exe = []
-        runner = False
-    elif op == 'check':
-        # Use py_compile for syntax checking
-        cexe_flags = ['-m', 'py_compile']
-        out_flag_and_exe = []
         runner = False
     elif op == 'run':
         cexe_flags = []
-        out_flag_and_exe = []
         runner = [cexe]
     else:
         return None
@@ -969,10 +962,10 @@ def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templa
     version = version_str.split()[1]
 
     compile_file(code_paths,
-                 out_flag_and_exe=out_flag_and_exe,
+                 out_flag_and_exe=[],
                  cexe=cexe,
                  runner=runner,
-                 cexe_flags=cexe_flags if op == 'check' else [],
+                 cexe_flags=cexe_flags, # Pass the flags we defined above
                  args=args,
                  op=op,
                  compiler_version=version,
