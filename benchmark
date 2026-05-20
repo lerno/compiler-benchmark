@@ -342,8 +342,8 @@ def bm_Ada_using_gcc(results: Results, lang: str, code_paths: list, args: list, 
         return None
     for gcc_version in VERSIONS:
         cexe = match_lang_cexe(args, lang, 'gnat' + str(gcc_version))
-        if cexe:
-            continue;
+        if not cexe:
+            continue
         version = get_version(sp.run([cexe, '--version'], stdout=sp.PIPE))
         compile_file(code_paths,
                      out_flag_and_exe=['-o', out_binary(lang)],
