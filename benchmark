@@ -1040,6 +1040,8 @@ def bm_Scheme(results: Results, code_paths, args: argparse.Namespace, op, templa
 def bm_Nim(results: Results, code_paths, args: argparse.Namespace, op, templated: bool, cexe_flags=None):
     lang = 'Nim'
     cexe = match_lang_cexe(args, lang, 'nim')
+    if not cexe:
+        return None
 
     # tcc_exe = which('tcc')
     # cexe_flags = ['--hints:off', '--checks:off', '--stacktrace:off'] + ([('--cc:tcc')] if tcc_exe else [])
@@ -1052,19 +1054,19 @@ def bm_Nim(results: Results, code_paths, args: argparse.Namespace, op, templated
         cexe_flags += ['c', '--mm:refc', '--opt:none']  # TODO detect when --gc:arc is available
     else:
         return None
-    if cexe:
-        version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[3]
-        compile_file(code_paths,
-                     out_flag_and_exe=['--out:' + out_binary(lang)],
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,  # no syntax flag currently so compile to object file instead
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+
+    version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[3]
+    compile_file(code_paths,
+                 out_flag_and_exe=['--out:' + out_binary(lang)],
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,  # no syntax flag currently so compile to object file instead
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def set_rustup_channel(channel):
@@ -1132,29 +1134,30 @@ def bm_Rust(results: Results, code_paths, args: argparse.Namespace, op, template
 def bm_Java(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Java'
     cexe = match_lang_cexe(args, lang, 'javac')
-    if cexe:
-        cexe_flags = ['-Xdiags:verbose']
-        if op == 'check':
-            cexe_flags += ['-proc:only']
-        try:
-            task = sp.run([cexe, '-version'], stdout=sp.PIPE, stderr=sp.PIPE)
-            version = task.stdout.decode('utf-8').split()[1]
-        except Exception:
-            print("WARNING: Failed to decode version from neither stdout:" + str(task.stdout) + " nor stderr:" + str(task.stderr) +
-                  " of command " + str([cexe, '-version']) + ", defaulting version of " + lang + " to `none`",
-                  file=sys.stderr)
-            version = 'unknown'
-        compile_file(code_paths,
-                     out_flag_and_exe=[],
-                     cexe=cexe,
-                     runner=[which('java'), '-classpath', '.'],
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    if not cexe:
+        return None
+    cexe_flags = ['-Xdiags:verbose']
+    if op == 'check':
+        cexe_flags += ['-proc:only']
+    try:
+        task = sp.run([cexe, '-version'], stdout=sp.PIPE, stderr=sp.PIPE)
+        version = task.stdout.decode('utf-8').split()[1]
+    except Exception:
+        print("WARNING: Failed to decode version from neither stdout:" + str(task.stdout) + " nor stderr:" + str(task.stderr) +
+              " of command " + str([cexe, '-version']) + ", defaulting version of " + lang + " to `none`",
+              file=sys.stderr)
+        version = 'unknown'
+    compile_file(code_paths,
+                 out_flag_and_exe=[],
+                 cexe=cexe,
+                 runner=[which('java'), '-classpath', '.'],
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Pareas(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
