@@ -1268,7 +1268,6 @@ def compile_file(code_paths: list,
                     os.chmod(outb, st.st_mode | stat.S_IEXEC)
                 run_dur_min = run_compiled_file(os.path.join(lang_dir, outb))
             elif isinstance(runner, list):
-                print(runner)
                 run_dur_min = run_compiled_file(runner + [outb])
         elif out_flag_and_exe:
             if runner is not False:
