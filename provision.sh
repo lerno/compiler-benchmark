@@ -198,8 +198,12 @@ fi
 
 if should_install "swift"; then
     echo ">> Installing Swift..."
-    SWIFT_URL="https://download.swift.org/swift-6.3.2-release/ubuntu2204/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu22.04.tar.gz"
-    wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR"
+	if [ "$OS" == "arch" ]; then
+        ${PKG_MAN} swift-bin
+    else
+		SWIFT_URL="https://download.swift.org/swift-6.3.2-release/ubuntu2204/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu22.04.tar.gz"
+		wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR"
+    fi
 fi
 
 # --- 12. Vox (Build from source) ---
