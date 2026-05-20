@@ -212,8 +212,6 @@ fi
 
 if should_install "cproc"; then
     echo ">> Building cproc..."
-
-    # 1. Install QBE backend dependency
     echo ">> Installing QBE (dependency for cproc)..."
     if [ "$OS" == "arch" ]; then
         ${PKG_MAN} qbe
@@ -228,8 +226,6 @@ if should_install "cproc"; then
             rm -rf "$QBE_TMP"
         }
     fi
-
-    # 2. Build cproc
     CPROC_TMP=$(mktemp -d)
     git clone --depth 1 https://github.com/michaelforney/cproc "$CPROC_TMP"
     pushd "$CPROC_TMP"
