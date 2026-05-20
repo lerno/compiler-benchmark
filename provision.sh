@@ -47,7 +47,6 @@ for i in "$@"; do
             show_help
             ;;
         *)
-        # Ignore unknown flags or handle error
         ;;
     esac
 done
@@ -129,11 +128,10 @@ if should_install "csharp"; then
         echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
         sudo apt update
         ${PKG_MAN} mono-devel
-        sudo snap install --classic dotnet-sdk || echo "Skipping dotnet snap - please install manually"
+        sudo snap install --classic dotnet-sdk || echo "Skipping dotnet snap"
     fi
 fi
 
-# --- DMD ---
 if should_install "dmd"; then
     echo ">> Installing DMD..."
     if [ "$OS" == "arch" ]; then
@@ -146,14 +144,9 @@ if should_install "dmd"; then
     fi
 fi
 
-# --- Nim ---
 if should_install "nim"; then
     echo ">> Installing Nim..."
-    if [ "$OS" == "arch" ]; then
-		${PKG_MAN} nim;
-	else
-		curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y;
-	fi
+    if [ "$OS" == "arch" ]; then ${PKG_MAN} nim; else curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y; fi
 fi
 
 # --- Rust ---
@@ -197,7 +190,7 @@ fi
 
 if should_install "swift"; then
     echo ">> Installing Swift..."
-	if [ "$OS" == "arch" ]; then
+    if [ "$OS" == "arch" ]; then
         ${PKG_MAN} swift-bin
 	else
 		SWIFT_URL=https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
@@ -208,7 +201,7 @@ if should_install "swift"; then
     fi
 fi
 
-# --- Vox ---
+# Vox
 if should_install "vox"; then
     echo ">> Building Vox..."
     if [ "$OS" == "arch" ]; then ${PKG_MAN} ldc; else ${PKG_MAN} ldc; fi
@@ -221,7 +214,76 @@ if should_install "vox"; then
     rm -rf "$VOX_TMP"
 fi
 
-# --- CProc ---
+# CProc
 if should_install "cproc"; then
     echo ">> Building cproc..."
     if [ "$OS" == "arch" ]; then ${PKG_MAN} qbe; else ${PKG_MAN} qbe || echo "QBE build needed"; fi
+    CPROC_TMP=$(mktemp -d)
+    git clone --depth 1 https://github.com/michaelforney/cproc "$CPROC_TMP"
+    pushd "$CPROC_TMP"
+    ./configure --prefix="$INSTALL_DIR"
+    make && make install
+    popd
+    rm -rf "$CPROC_TMP"
+fi
+
+# Cuik
+if should_install "cuik"; then
+    echo ">> Building Cuik..."
+    if [ "$OS" == "arch" ]; then ${PKG_MAN} luajit; else ${PKG_MAN} luajit; fi
+    CUIK_TMP=$(mktemp -d)
+    git clone --depth 1 https://github.com/RealNeGate/Cuik/ "$CUIK_TMP"
+    pushd "$CUIK_TMP"
+    sed -i 's/-Werror//g' build.lua
+    find . -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/__debugbreak/__builtin_trap/g' {} +
+    sed -i '1i #include <ctype.h>' common/common.c
+    CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" luajit build.lua -x64 -driver -cuik -tb
+    cp cuik "$BIN_DIR/cuik"
+    popd
+    rm -rf "$CUIK_TMP"
+fi
+
+# --- Pareas ---
+if should_install "pareas"; then
+    echo ">> Installing Pareas and Dependencies..."
+
+    # 1. System Dependencies (C++20, Meson, Ninja, Python)
+    if [ "$OS" == "arch" ]; then
+        ${PKG_MAN} meson ninja python-pip
+    else
+        ${PKG_MAN} meson ninja-build python3-pip
+    fi
+
+    # 2. Futhark Compiler (Required for Pareas)
+    if ! command -v futhark &> /dev/null; then
+        echo ">> Downloading Futhark compiler binary..."
+        F_VER="0.25.15" # Latest known stable
+        F_URL="https://github.com/diku-dk/futhark/releases/download/v${F_VER}/futhark-${F_VER}-linux-x86_64.tar.xz"
+        wget -q --show-progress "$F_URL" -O /tmp/futhark.tar.xz
+        tar -xJf /tmp/futhark.tar.xz --strip-components=1 -C "$INSTALL_DIR"
+        rm /tmp/futhark.tar.xz
+    fi
+
+    # 3. Clone and Build Pareas
+    PAREAS_TMP=$(mktemp -d)
+    # Note: --recursive is critical for {fmt} and other submodules
+    git clone --recursive https://github.com/Snektron/pareas "$PAREAS_TMP"
+    pushd "$PAREAS_TMP"
+
+    # We use the multicore backend as it is the most compatible for CPU benchmarking
+    # without requiring specific NVIDIA/OpenCL drivers installed.
+    meson setup build -Dfuthark-backend=multicore --prefix="$INSTALL_DIR" --buildtype=release
+    ninja -C build
+
+    # Install the resulting binary
+    cp build/pareas "$BIN_DIR/pareas"
+    popd
+    rm -rf "$PAREAS_TMP"
+fi
+
+# --- Finalization ---
+echo "--------------------------------------------------------"
+echo "✅ Requested installations complete for $OS!"
+echo "--------------------------------------------------------"
+echo "IMPORTANT: Ensure your PATH includes these directories:"
+echo 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.nimble/bin:$PATH"'
