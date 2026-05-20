@@ -619,6 +619,7 @@ def bm_Vox(results: Results, code_paths, args: argparse.Namespace, op, templated
     cexe = match_lang_cexe(args, lang, 'vox')
     if not cexe:
         return
+
     if op == 'check':
         cexe_flags = ['--check-only']
         out_flag_and_exe = []
@@ -629,6 +630,7 @@ def bm_Vox(results: Results, code_paths, args: argparse.Namespace, op, templated
         out_flag_and_exe = ['--of=' + out_binary(lang)]
     else:
         return None
+
     compile_file(code_paths,
                  out_flag_and_exe=out_flag_and_exe,
                  cexe=cexe,
