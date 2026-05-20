@@ -649,10 +649,28 @@ def bm_CSharp_using_mcs(results: Results, code_paths, args: argparse.Namespace, 
     cexe = match_lang_cexe(args, lang, 'mcs')
     if not cexe:
         return
-    cexe_flags = ['-target:exe'] + ([] if op == 'build' else [''])
-    version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[4]
+
+    # Standard flags
+    cexe_flags = ['-target:exe']
+
+    # Handle 'check' operation for mcs
+    if op == 'check':
+        # Direct output to the null device to simulate a syntax/type check
+        null_device = 'NUL' if os.name == 'nt' else '/dev/null'
+        out_flag = ['-out:' + null_device]
+    else:
+        out_flag = ['-out:' + out_binary(lang)]
+
+    # Version extraction
+    try:
+        version_output = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.STDOUT).stdout.decode('utf-8')
+        # mcs version string is usually: "Mono C# compiler version X.X.X.X"
+        version = version_output.split()[4]
+    except:
+        version = "unknown"
+
     compile_file(code_paths,
-                 out_flag_and_exe=['-out:' + out_binary(lang)],
+                 out_flag_and_exe=out_flag,
                  cexe=cexe,
                  runner=True,
                  cexe_flags=cexe_flags,
@@ -2248,6 +2266,7 @@ def main():
 
     if 'C#' in args.language_exes:
         if 'check' in args.operations:
+            bm_CSharp_using_mcs(results=results, code_paths=code_paths, args=args, op='build', templated=False)
             bm_CSharp_using_csc(results=results, code_paths=code_paths, args=args, op='check', templated=False)
         if 'build' in args.operations:
             bm_CSharp_using_mcs(results=results, code_paths=code_paths, args=args, op='build', templated=False)
