@@ -1305,9 +1305,15 @@ def compile_file(code_paths: list,
 
     # run
     run_dur_min = None             # run duration minimum
-    if op == 'build':
-        outb = out_binary(lang)
+    if op == 'run':
         if runner:
+            # For Python, runner is [python_exe], we append the source name
+            run_args = runner + [src_name] if isinstance(runner, list) else [src_name]
+            # Use a higher run_count for more accurate timing
+            run_dur_min = run_compiled_file(run_args, run_count=args.run_count)
+    elif op == 'build':
+        outb = out_binary(lang)
+        if runner and lang != 'Python':
             if runner is True:      # binary should be runnable
                 if (cexe.endswith('cproc')):  # cproc forgets to set executable bit
                     st = os.stat(cexe)
@@ -2255,12 +2261,10 @@ def main():
             bm_Pareas(results=results, code_paths=code_paths, args=args, op='build', templated=False)
 
     if 'Python' in args.language_exes:
-        if 'check' in args.operations:
-            for templated in (False, True):
-                bm_Python(results=results, code_paths=code_paths, args=args, op='check', templated=templated)
-        if 'build' in args.operations:
-            for templated in (False, True):
-                bm_Python(results=results, code_paths=code_paths, args=args, op='build', templated=templated)
+        for op in args.operations:
+            if op in ('check', 'build', 'run'):
+                for templated in (False, True):
+                    bm_Python(results=results, code_paths=code_paths, args=args, op=op, templated=templated)
 
     if 'Mojo' in args.language_exes:
         if 'build' in args.operations:
