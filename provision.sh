@@ -27,12 +27,10 @@ show_help() {
 INSTALL_ALL=false
 declare -A SELECTED
 
-# If no arguments provided, show help
 if [ $# -eq 0 ]; then
     show_help
 fi
 
-# Parse CLI Arguments
 for i in "$@"; do
     case $i in
         --languages=*)
