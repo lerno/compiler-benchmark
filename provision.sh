@@ -170,8 +170,12 @@ fi
 
 if should_install "zig"; then
     echo ">> Installing Zig..."
-    ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
-    wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
+    if [ "$OS" == "arch" ]; then
+        ${PKG_MAN} zig
+    else
+		ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
+		wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
+    fi
 fi
 
 if should_install "circle"; then
