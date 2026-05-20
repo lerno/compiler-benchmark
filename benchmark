@@ -1301,9 +1301,7 @@ def compile_file(code_paths: list,
     run_dur_min = None             # run duration minimum
     if op == 'run':
         if runner:
-            # For Python, runner is [python_exe], we append the source name
             run_args = runner + [src_name] if isinstance(runner, list) else [src_name]
-            # Use a higher run_count for more accurate timing
             run_dur_min = run_compiled_file(run_args, run_count=args.run_count)
     elif op == 'build':
         outb = out_binary(lang)
