@@ -245,6 +245,7 @@ if should_install "cuik"; then
 	sed -i '1i #include <ctype.h>' tb/x64/x64_gen.h
 	sed -i '1i #include <stddef.h>' tb/libtb.c
 	sed -i 's/static TB_Node\* make_int_node/TB_Node\* make_int_node/g' tb/new_builder.c
+	find . -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/__debugbreak/__builtin_trap/g' {} +
 	CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" \
 		  luajit build.lua -x64 -driver -cuik -tb
 fi
