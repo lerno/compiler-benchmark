@@ -5,15 +5,61 @@
 
 set -euo pipefail
 
-# --- 1. Path & Environment Setup ---
+# --- 1. Argument Parsing & Help ---
+show_help() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --languages=LIST    Comma-separated list of languages to install."
+    echo "  --help              Show this help message."
+    echo ""
+    echo "Available Language Keys:"
+    echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox"
+    echo ""
+    echo "Example:"
+    echo "  $0 --languages=zig,rust,c3"
+    echo "  $0 (installs all by default)"
+    exit 0
+}
+
+# Default: Install everything
+INSTALL_ALL=true
+declare -A SELECTED
+
+# Parse CLI Arguments
+for i in "$@"; do
+    case $i in
+        --languages=*)
+        REQUESTED_LANGS="${i#*=}"
+        INSTALL_ALL=false
+        IFS=',' read -ra ADDR <<< "$REQUESTED_LANGS"
+        for lang in "${ADDR[@]}"; do
+            SELECTED[$(echo "$lang" | tr '[:upper:]' '[:lower:]')]=true
+        done
+        shift
+        ;;
+        --help)
+            show_help
+            ;;
+        *)
+        ;;
+    esac
+done
+
+should_install() {
+    [[ "$INSTALL_ALL" == "true" ]] && return 0
+    [[ -n "${SELECTED[$1]:-}" ]] && return 0
+    return 1
+}
+
+# --- 2. Path & Environment Setup ---
 INSTALL_DIR="${HOME}/.local"
 BIN_DIR="${INSTALL_DIR}/bin"
 mkdir -p "$BIN_DIR"
 
-# Ensure local paths are in the current shell session for internal builds (like Vox)
 export PATH="${BIN_DIR}:${HOME}/.cargo/bin:${HOME}/.nimble/bin:${PATH}"
 
-# --- 2. OS Detection ---
+# --- 3. OS Detection ---
 if [ -f /etc/arch-release ]; then
     OS="arch"
     PKG_MAN="sudo pacman -S --noconfirm --needed"
@@ -27,126 +73,140 @@ else
     exit 1
 fi
 
-# --- 3. Base Build Essentials ---
+# --- 4. Base Build Essentials (Always Installed) ---
 echo ">> Installing Base Build Tools..."
 if [ "$OS" == "arch" ]; then
-    # Arch requires base-devel for any source compilation
     $PKG_MAN base-devel git curl wget unzip tar xz lld
 else
     $PKG_MAN build-essential git curl wget unzip tar xz-utils software-properties-common lld
 fi
 
-# --- 4. GCC Suite (C, C++, Go, Ada, D) ---
-echo ">> Installing GCC Suite..."
-if [ "$OS" == "arch" ]; then
-    $PKG_MAN gcc gcc-ada gcc-d gcc-go
-else
-    $PKG_MAN gcc g++ gnat gdc gccgo
+# --- 5. GCC Suite (C, C++, Go, Ada, D) ---
+if should_install "gcc"; then
+    echo ">> Installing GCC Suite..."
+    if [ "$OS" == "arch" ]; then
+        $PKG_MAN gcc gcc-ada gcc-d gcc-go
+    else
+        $PKG_MAN gcc g++ gnat gdc gccgo
+    fi
 fi
 
-# --- 5. LLVM / Clang (Version 17+) ---
-echo ">> Installing LLVM/Clang..."
-if [ "$OS" == "arch" ]; then
-    # Arch extra repo currently has LLVM 17 or 18 as default
-    $PKG_MAN clang lld llvm
-else
-    # Ubuntu specific LLVM 17 logic
-    CODENAME=$(lsb_release -cs)
-    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-    sudo add-apt-repository -y "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-17 main"
-    sudo apt update
-    $PKG_MAN clang-17 lld-17 llvm-17-dev
-    sudo ln -sf /usr/bin/clang-17 /usr/bin/clang
-    sudo ln -sf /usr/bin/clang++-17 /usr/bin/clang++
-    sudo ln -sf /usr/bin/lld-17 /usr/bin/lld
+# --- 6. LLVM / Clang (Version 17+) ---
+if should_install "llvm"; then
+    echo ">> Installing LLVM/Clang..."
+    if [ "$OS" == "arch" ]; then
+        $PKG_MAN clang lld llvm
+    else
+        CODENAME=$(lsb_release -cs)
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository -y "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-17 main"
+        sudo apt update
+        $PKG_MAN clang-17 lld-17 llvm-17-dev
+        sudo ln -sf /usr/bin/clang-17 /usr/bin/clang
+        sudo ln -sf /usr/bin/clang++-17 /usr/bin/clang++
+        sudo ln -sf /usr/bin/lld-17 /usr/bin/lld
+    fi
 fi
 
-# --- 6. Repository Languages (Java, Julia, OCaml, Python, Scheme, TCC) ---
-echo ">> Installing Repository Languages..."
-if [ "$OS" == "arch" ]; then
-    $PKG_MAN jdk-openjdk julia ocaml python-psutil chezscheme tcc go
-else
-    $PKG_MAN openjdk-26-jdk julia ocaml python3-psutil chezscheme tcc golang-go
+# --- 7. Repository Languages (Java, Julia, OCaml, Python, Scheme, TCC) ---
+if should_install "repo"; then
+    echo ">> Installing Repository Languages..."
+    if [ "$OS" == "arch" ]; then
+        $PKG_MAN jdk-openjdk julia ocaml python-psutil chezscheme tcc go
+    else
+        # Note: Java version bumped to a current LTS if 26 is unavailable
+        $PKG_MAN openjdk-21-jdk julia ocaml python3-psutil chezscheme tcc golang-go
+    fi
 fi
 
-# --- 7. C# (Mono & .NET SDK) ---
-echo ">> Installing C# environment..."
-if [ "$OS" == "arch" ]; then
-    $PKG_MAN mono mono-addins dotnet-sdk
-else
-    # Mono Official Repo for Ubuntu
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-    echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-    sudo apt update
-    $PKG_MAN mono-devel mono-mcs
-    sudo snap install --classic dotnet-sdk
+# --- 8. C# (Mono & .NET SDK) ---
+if should_install "csharp"; then
+    echo ">> Installing C# environment..."
+    if [ "$OS" == "arch" ]; then
+        $PKG_MAN mono mono-addins dotnet-sdk
+    else
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+        echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+        sudo apt update
+        $PKG_MAN mono-devel
+        sudo snap install --classic dotnet-sdk || echo "Skipping dotnet snap - please install manually"
+    fi
 fi
 
-# --- 8. DMD (D Language) ---
-echo ">> Installing DMD..."
-if [ "$OS" == "arch" ]; then
-    $PKG_MAN dmd
-else
-    DMD_VER=$(wget -q -O - "https://dlang.org/download.html" | grep -oP 'releases/2.x/\K\d+\.\d+\.\d+(?=/dmd_)' | head -n 1)
-    ARCH_S=$( [ "$(uname -m)" == "x86_64" ] && echo "amd64" || echo "i386" )
-    wget -q --show-progress "http://downloads.dlang.org/releases/2.x/${DMD_VER}/dmd_${DMD_VER}-0_${ARCH_S}.deb" -O /tmp/dmd.deb
-    sudo dpkg -i /tmp/dmd.deb || sudo apt-get install -f -y
+# --- 9. DMD (D Language) ---
+if should_install "dmd"; then
+    echo ">> Installing DMD..."
+    if [ "$OS" == "arch" ]; then
+        $PKG_MAN dmd
+    else
+        DMD_VER=$(wget -q -O - "https://dlang.org/download.html" | grep -oP 'releases/2.x/\K\d+\.\d+\.\d+(?=/dmd_)' | head -n 1)
+        ARCH_S=$( [ "$(uname -m)" == "x86_64" ] && echo "amd64" || echo "i386" )
+        wget -q --show-progress "http://downloads.dlang.org/releases/2.x/${DMD_VER}/dmd_${DMD_VER}-0_${ARCH_S}.deb" -O /tmp/dmd.deb
+        sudo dpkg -i /tmp/dmd.deb || sudo apt-get install -f -y
+    fi
 fi
 
-# --- 9. Rust (Nightly) & Nim ---
-echo ">> Installing Rust and Nim..."
-if ! command -v nim &>/dev/null; then
+# --- 10. Rust & Nim ---
+if should_install "nim"; then
+    echo ">> Installing Nim..."
     curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
 fi
-if ! command -v rustup &>/dev/null; then
+
+if should_install "rust"; then
+    echo ">> Installing Rust..."
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
 fi
 
-# --- 10. C3, Vlang, Zig (Direct Binary Downloads) ---
-echo ">> Installing Binary-distributed languages..."
+# --- 11. Binary-distributed languages ---
+if should_install "c3"; then
+    echo ">> Installing C3..."
+    curl -fsSL https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh | C3_VERSION=0.7.8 bash
+fi
 
-# C3
-curl -fsSL https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh | C3_VERSION=0.7.8 bash
+if should_install "vlang"; then
+    echo ">> Installing Vlang..."
+    V_ZIP=$(mktemp /tmp/vlang.XXXXXX.zip)
+    curl -s -L -o "$V_ZIP" "https://github.com/vlang/v/releases/latest/download/v_linux.zip"
+    unzip -o -qq "$V_ZIP" -d "$INSTALL_DIR"
+    rm "$V_ZIP"
+fi
 
-# Vlang
-V_ZIP=$(mktemp /tmp/vlang.XXXXXX.zip)
-curl -s -L -o "$V_ZIP" "https://github.com/vlang/v/releases/latest/download/v_linux.zip"
-unzip -o -qq "$V_ZIP" -d "$INSTALL_DIR"
-rm "$V_ZIP"
+if should_install "zig"; then
+    echo ">> Installing Zig..."
+    ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
+    wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
+fi
 
-# Zig (Scraping Master)
-ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
-wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
+if should_install "circle"; then
+    echo ">> Installing Circle..."
+    CIRCLE_VER=$(wget -q -O - "https://www.circle-lang.org/linux/" | grep -oP 'build_\K\d+(?=\.tgz)' | sort -nr | head -n 1)
+    wget -q --show-progress -c "https://www.circle-lang.org/linux/build_${CIRCLE_VER}.tgz" -O - | tar -xz -C "${INSTALL_DIR}"
+fi
 
-# Circle (Scraping Latest)
-CIRCLE_VER=$(wget -q -O - "https://www.circle-lang.org/linux/" | grep -oP 'build_\K\d+(?=\.tgz)' | sort -nr | head -n 1)
-wget -q --show-progress -c "https://www.circle-lang.org/linux/build_${CIRCLE_VER}.tgz" -O - | tar -xz -C "${INSTALL_DIR}"
-
-# --- 11. Swift ---
-echo ">> Installing Swift..."
-# Note: Using Ubuntu binary. On Arch, this may require 'ncurses5-compat-libs' from AUR,
-# but the script attempts the manual download for consistency.
-SWIFT_URL="https://download.swift.org/swift-5.9.2-release/ubuntu2204/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-ubuntu22.04.tar.gz"
-wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR"
+if should_install "swift"; then
+    echo ">> Installing Swift..."
+    SWIFT_URL="https://download.swift.org/swift-5.9.2-release/ubuntu2204/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-ubuntu22.04.tar.gz"
+    wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR"
+fi
 
 # --- 12. Vox (Build from source) ---
-echo ">> Building Vox..."
-# Vox requires a D compiler (LDC) to build itself
-if [ "$OS" == "arch" ]; then $PKG_MAN ldc; else $PKG_MAN ldc; fi
+if should_install "vox"; then
+    echo ">> Building Vox..."
+    # Vox requires LDC (D compiler)
+    if [ "$OS" == "arch" ]; then $PKG_MAN ldc; else $PKG_MAN ldc; fi
 
-VOX_TMP=$(mktemp -d)
-git clone --depth 1 https://github.com/MrSmith33/vox "$VOX_TMP"
-pushd "$VOX_TMP/source"
-ldc2 -d-version=cli -m64 -O3 -release -boundscheck=off -enable-inlining -flto=full -i main.d -of=vox.out
-cp vox.out "$BIN_DIR/vox"
-popd
-rm -rf "$VOX_TMP"
+    VOX_TMP=$(mktemp -d)
+    git clone --depth 1 https://github.com/MrSmith33/vox "$VOX_TMP"
+    pushd "$VOX_TMP/source"
+    ldc2 -d-version=cli -m64 -O3 -release -boundscheck=off -enable-inlining -flto=full -i main.d -of=vox.out
+    cp vox.out "$BIN_DIR/vox"
+    popd
+    rm -rf "$VOX_TMP"
+fi
 
 # --- Finalization ---
 echo "--------------------------------------------------------"
-echo "✅ Installation complete for $OS!"
+echo "✅ Installation cycle complete for $OS!"
 echo "--------------------------------------------------------"
 echo "IMPORTANT: Ensure your PATH includes these directories:"
 echo 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.nimble/bin:$PATH"'
-echo "Some compilers (Zig/Swift/Circle) are extracted into $INSTALL_DIR."
-echo "You may need to symlink them or add their specific subfolders to PATH."
