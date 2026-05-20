@@ -90,18 +90,18 @@ fi
 # --- 4. Base Build Essentials (Always Installed if any language is chosen) ---
 echo ">> Installing Base Build Tools..."
 if [ "$OS" == "arch" ]; then
-    "${PKG_MAN}" base-devel git curl wget unzip tar xz lld
+    ${PKG_MAN} base-devel git curl wget unzip tar xz lld
 else
-    "${PKG_MAN}" build-essential git curl wget unzip tar xz-utils software-properties-common lld
+    ${PKG_MAN} build-essential git curl wget unzip tar xz-utils software-properties-common lld
 fi
 
 # --- 5. GCC Suite (C, C++, Go, Ada, D) ---
 if should_install "gcc"; then
     echo ">> Installing GCC Suite..."
     if [ "$OS" == "arch" ]; then
-        "${PKG_MAN}" gcc gcc-ada gcc-d gcc-go
+        ${PKG_MAN} gcc gcc-ada gcc-d gcc-go
     else
-        "${PKG_MAN}" gcc g++ gnat gdc gccgo
+        ${PKG_MAN} gcc g++ gnat gdc gccgo
     fi
 fi
 
@@ -109,13 +109,13 @@ fi
 if should_install "llvm"; then
     echo ">> Installing LLVM/Clang..."
     if [ "$OS" == "arch" ]; then
-        "${PKG_MAN}" clang lld llvm
+        ${PKG_MAN} clang lld llvm
     else
         CODENAME=$(lsb_release -cs)
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo add-apt-repository -y "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-17 main"
         sudo apt update
-        "${PKG_MAN}" clang-17 lld-17 llvm-17-dev
+        ${PKG_MAN} clang-17 lld-17 llvm-17-dev
         sudo ln -sf /usr/bin/clang-17 /usr/bin/clang
         sudo ln -sf /usr/bin/clang++-17 /usr/bin/clang++
         sudo ln -sf /usr/bin/lld-17 /usr/bin/lld
@@ -126,9 +126,9 @@ fi
 if should_install "repo"; then
     echo ">> Installing Repository Languages..."
     if [ "$OS" == "arch" ]; then
-        "${PKG_MAN}" jdk-openjdk julia ocaml python-psutil chezscheme tcc go
+        ${PKG_MAN} jdk-openjdk julia ocaml python-psutil chezscheme tcc go
     else
-        "${PKG_MAN}" openjdk-21-jdk julia ocaml python3-psutil chezscheme tcc golang-go
+        ${PKG_MAN} openjdk-21-jdk julia ocaml python3-psutil chezscheme tcc golang-go
     fi
 fi
 
@@ -136,12 +136,12 @@ fi
 if should_install "csharp"; then
     echo ">> Installing C# environment..."
     if [ "$OS" == "arch" ]; then
-        "${PKG_MAN}" mono mono-addins dotnet-sdk
+        ${PKG_MAN} mono dotnet-sdk
     else
         sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
         echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
         sudo apt update
-        "${PKG_MAN}" mono-devel
+        ${PKG_MAN} mono-devel
         sudo snap install --classic dotnet-sdk || echo "Skipping dotnet snap - please install manually"
     fi
 fi
@@ -150,7 +150,7 @@ fi
 if should_install "dmd"; then
     echo ">> Installing DMD..."
     if [ "$OS" == "arch" ]; then
-        "${PKG_MAN}" dmd
+        ${PKG_MAN} dmd
     else
         DMD_VER=$(wget -q -O - "https://dlang.org/download.html" | grep -oP 'releases/2.x/\K\d+\.\d+\.\d+(?=/dmd_)' | head -n 1)
         ARCH_S=$( [ "$(uname -m)" == "x86_64" ] && echo "amd64" || echo "i386" )
@@ -205,7 +205,7 @@ fi
 # --- 12. Vox (Build from source) ---
 if should_install "vox"; then
     echo ">> Building Vox..."
-    if [ "$OS" == "arch" ]; then "${PKG_MAN}" ldc; else "${PKG_MAN}" ldc; fi
+    if [ "$OS" == "arch" ]; then ${PKG_MAN} ldc; else ${PKG_MAN} ldc; fi
 
     VOX_TMP=$(mktemp -d)
     git clone --depth 1 https://github.com/MrSmith33/vox "$VOX_TMP"
