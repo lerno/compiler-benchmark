@@ -879,7 +879,11 @@ def bm_Zig(results: Results, code_paths, args: argparse.Namespace, op, templated
 
 def bm_Odin(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Odin'
+
     cexe = match_lang_cexe(args, lang, 'odin')
+    if not cexe:
+        return None
+
     if op == 'build':
         cexe_flags = ['build', '-build-mode:exe', '-linker:lld']
         out_flag_and_exe = ['-out:' + out_binary(lang)]
@@ -888,28 +892,28 @@ def bm_Odin(results: Results, code_paths, args: argparse.Namespace, op, template
         out_flag_and_exe = []
     else:
         return None
-    if cexe:
-        version = sp.run([cexe, 'version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+
+    version = sp.run([cexe, 'version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[2]
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Python'
+
     cexe = match_lang_cexe(args, lang, 'python3') or \
         match_lang_cexe(args, lang, 'python') or \
         match_lang_cexe(args, lang, 'pypy3') or \
         match_lang_cexe(args, lang, 'pypy')
-
     if not cexe:
         return None
 
@@ -949,9 +953,11 @@ def bm_Python(results: Results, code_paths, args: argparse.Namespace, op, templa
 
 def bm_Mojo(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Mojo'
+
     cexe = match_lang_cexe(args, lang, 'mojo')
     if not cexe:
         return None
+
     version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[1]
     compile_file(code_paths,
                  out_flag_and_exe=['-o', out_binary(lang)],
@@ -968,34 +974,37 @@ def bm_Mojo(results: Results, code_paths, args: argparse.Namespace, op, template
 
 def bm_Scheme(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Scheme'
+
     cexe = match_lang_cexe(args, lang, 'scheme')
-    if cexe:
-        version_run = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.PIPE)
-        version = version_run.stderr.decode('utf-8').strip()
+    if not cexe:
+        return None
 
-        if op == 'run':
-            cexe_flags = ['--script']
-            stdin_input = None
-        elif op == 'build':
-            # For build operation: echo '(compile-file "main_0.scm")' | scheme -q
-            cexe_flags = ['-q']
-            # Generate the stdin input dynamically based on run_ix
-            stdin_input = '(compile-file "main_{}.scm")'
-        else:
-            return None
+    version_run = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.PIPE)
+    version = version_run.stderr.decode('utf-8').strip()
 
-        compile_file(code_paths,
-                     out_flag_and_exe=[],
-                     cexe=cexe,
-                     runner=False,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results,
-                     stdin_input=stdin_input)
+    if op == 'run':
+        cexe_flags = ['--script']
+        stdin_input = None
+    elif op == 'build':
+        # For build operation: echo '(compile-file "main_0.scm")' | scheme -q
+        cexe_flags = ['-q']
+        # Generate the stdin input dynamically based on run_ix
+        stdin_input = '(compile-file "main_{}.scm")'
+    else:
+        return None
+
+    compile_file(code_paths,
+                 out_flag_and_exe=[],
+                 cexe=cexe,
+                 runner=False,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results,
+                 stdin_input=stdin_input)
 
 
 def bm_Nim(results: Results, code_paths, args: argparse.Namespace, op, templated: bool, cexe_flags=None):
