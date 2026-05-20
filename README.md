@@ -34,8 +34,8 @@ compilers. Supported languages are:
 - [C#](https://docs.microsoft.com/en-us/dotnet/csharp/) (using `mcs`), and
 - [Java](https://www.oracle.com/java/) (using `javac`).
 
-A subset of these can be installed on Ubuntu (tested on 20.04) via the script
-`./install-compilers-on-ubuntu-20.04.sh` in this repo.
+A subset of these can be installed on Linux via the script
+`./provision.sh`.
 
 ## Install Python 3 packages
 
