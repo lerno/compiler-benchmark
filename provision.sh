@@ -14,11 +14,11 @@ show_help() {
     echo "  --help              Show this help message."
     echo ""
     echo "Available Language Keys:"
-    echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox"
+    echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox, cproc"
     echo ""
     echo "Examples:"
     echo "  $0 --languages=all"
-    echo "  $0 --languages=zig,rust,c3"
+    echo "  $0 --languages=zig,rust,c3,cproc"
     exit 0
 }
 
@@ -197,7 +197,6 @@ if should_install "swift"; then
     fi
 fi
 
-# --- 12. Vox (Build from source) ---
 if should_install "vox"; then
     echo ">> Building Vox..."
     if [ "$OS" == "arch" ]; then ${PKG_MAN} ldc; else ${PKG_MAN} ldc; fi
@@ -209,6 +208,36 @@ if should_install "vox"; then
     cp vox.out "$BIN_DIR/vox"
     popd
     rm -rf "$VOX_TMP"
+fi
+
+if should_install "cproc"; then
+    echo ">> Building cproc..."
+
+    # 1. Install QBE backend dependency
+    echo ">> Installing QBE (dependency for cproc)..."
+    if [ "$OS" == "arch" ]; then
+        ${PKG_MAN} qbe
+    else
+        # For Ubuntu, qbe is available in 22.04+
+        ${PKG_MAN} qbe || {
+            echo "QBE not found in repos, building from source..."
+            QBE_TMP=$(mktemp -d)
+            git clone --depth 1 git://c3d.libre.cc/qbe.git "$QBE_TMP"
+            make -C "$QBE_TMP"
+            cp "$QBE_TMP/qbe" "$BIN_DIR/"
+            rm -rf "$QBE_TMP"
+        }
+    fi
+
+    # 2. Build cproc
+    CPROC_TMP=$(mktemp -d)
+    git clone --depth 1 https://github.com/michaelforney/cproc "$CPROC_TMP"
+    pushd "$CPROC_TMP"
+    ./configure --prefix="$INSTALL_DIR"
+    make
+    make install
+    popd
+    rm -rf "$CPROC_TMP"
 fi
 
 # --- Finalization ---
