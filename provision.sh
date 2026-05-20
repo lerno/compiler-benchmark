@@ -243,7 +243,7 @@ if should_install "cuik"; then
     rm -rf "$CUIK_TMP"
 fi
 
-# --- Pareas ---
+# Pareas
 if should_install "pareas"; then
     echo ">> Installing Pareas and Dependencies..."
 
