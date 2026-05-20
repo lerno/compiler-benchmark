@@ -200,9 +200,12 @@ if should_install "swift"; then
     echo ">> Installing Swift..."
 	if [ "$OS" == "arch" ]; then
         ${PKG_MAN} swift-bin
-    else
-		SWIFT_URL="https://download.swift.org/swift-6.3.2-release/ubuntu2204/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu22.04.tar.gz"
-		wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR"
+	else
+		SWIFT_URL=https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
+		wget -q --show-progress -c "$SWIFT_URL" -O - | tar -xz -C "$INSTALL_DIR" && \
+			"$INSTALL_DIR/swiftly" init --quiet-shell-followup && \
+			. "${SWIFTLY_HOME_DIR:-$HOME/.local/share/swiftly}/env.sh" && \
+			hash -r
     fi
 fi
 
