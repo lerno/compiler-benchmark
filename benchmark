@@ -1449,6 +1449,11 @@ def generate_test_function_call(lang: str, findex, typ, fil, templated: bool):
         fil.write(Tm('    ${T}_sum += ${F}(${N})').substitute(T=typ, N=n, F=fn))
     elif lang == 'scheme':
         fil.write(Tm('    (set! ${T}_sum (+ ${T}_sum (${F} ${N})))').substitute(T=typ, N=n, F=fn))
+    elif lang == 'c3':
+        if templated:
+            fil.write(Tm('    ${T}_sum += ${F}{${T}}(${N})').substitute(T=typ, N=n, F=fn))
+        else:
+            fil.write(Tm('    ${T}_sum += ${F}(${N})').substitute(T=typ, N=n, F=fn))
     else:
         fil.write(Tm('    ${T}_sum += ${F}(${N})').substitute(T=typ, N=n, F=fn))
 
