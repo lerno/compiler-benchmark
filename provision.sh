@@ -241,6 +241,8 @@ if should_install "cuik"; then
     CUIK_TMP=$(mktemp -d)
     git clone --depth 1 https://github.com/RealNeGate/Cuik/ "$CUIK_TMP"
     pushd "$CUIK_TMP"
+	sed -i '1i #include <ctype.h>' common/common.c
+	sed -i '1i #include <stddef.h>' tb/libtb.c
 	CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" \
 		  luajit build.lua -x64 -driver -cuik -tb
 fi
