@@ -105,20 +105,13 @@ if should_install "gcc"; then
     fi
 fi
 
-# --- 6. LLVM / Clang (Version 17+) ---
+# LLVM / Clang
 if should_install "llvm"; then
     echo ">> Installing LLVM/Clang..."
     if [ "$OS" == "arch" ]; then
         ${PKG_MAN} clang lld llvm
     else
-        CODENAME=$(lsb_release -cs)
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo add-apt-repository -y "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-17 main"
-        sudo apt update
-        ${PKG_MAN} clang-17 lld-17 llvm-17-dev
-        sudo ln -sf /usr/bin/clang-17 /usr/bin/clang
-        sudo ln -sf /usr/bin/clang++-17 /usr/bin/clang++
-        sudo ln -sf /usr/bin/lld-17 /usr/bin/lld
+        ${PKG_MAN} clang lld
     fi
 fi
 
@@ -132,7 +125,7 @@ if should_install "repo"; then
     fi
 fi
 
-# --- 8. C# (Mono & .NET SDK) ---
+# C# (Mono & .NET SDK) ---
 if should_install "csharp"; then
     echo ">> Installing C# environment..."
     if [ "$OS" == "arch" ]; then
@@ -146,7 +139,6 @@ if should_install "csharp"; then
     fi
 fi
 
-# --- 9. DMD (D Language) ---
 if should_install "dmd"; then
     echo ">> Installing DMD..."
     if [ "$OS" == "arch" ]; then
@@ -159,7 +151,6 @@ if should_install "dmd"; then
     fi
 fi
 
-# --- 10. Rust & Nim ---
 if should_install "nim"; then
     echo ">> Installing Nim..."
     curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
@@ -170,7 +161,6 @@ if should_install "rust"; then
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
 fi
 
-# --- 11. Binary-distributed languages ---
 if should_install "c3"; then
     echo ">> Installing C3..."
     curl -fsSL https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh | C3_VERSION=0.7.8 bash
