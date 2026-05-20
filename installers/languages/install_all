@@ -7,44 +7,60 @@ set -euo pipefail
 
 # --- 1. Argument Parsing & Help ---
 show_help() {
-    echo "Usage: $0 [OPTIONS]"
+    echo "Usage: $0 --languages=[LIST|all]"
     echo ""
     echo "Options:"
-    echo "  --languages=LIST    Comma-separated list of languages to install."
+    echo "  --languages=all     Install all available languages and tools."
+    echo "  --languages=LIST    Comma-separated list of specific languages to install."
     echo "  --help              Show this help message."
     echo ""
     echo "Available Language Keys:"
     echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox"
     echo ""
-    echo "Example:"
+    echo "Examples:"
+    echo "  $0 --languages=all"
     echo "  $0 --languages=zig,rust,c3"
-    echo "  $0 (installs all by default)"
     exit 0
 }
 
-# Default: Install everything
-INSTALL_ALL=true
+# Default: Install nothing unless specified
+INSTALL_ALL=false
 declare -A SELECTED
+
+# If no arguments provided, show help
+if [ $# -eq 0 ]; then
+    show_help
+fi
 
 # Parse CLI Arguments
 for i in "$@"; do
     case $i in
         --languages=*)
         REQUESTED_LANGS="${i#*=}"
-        INSTALL_ALL=false
-        IFS=',' read -ra ADDR <<< "$REQUESTED_LANGS"
-        for lang in "${ADDR[@]}"; do
-            SELECTED[$(echo "$lang" | tr '[:upper:]' '[:lower:]')]=true
-        done
+        if [ "$REQUESTED_LANGS" == "all" ]; then
+            INSTALL_ALL=true
+        else
+            IFS=',' read -ra ADDR <<< "$REQUESTED_LANGS"
+            for lang in "${ADDR[@]}"; do
+                SELECTED[$(echo "$lang" | tr '[:upper:]' '[:lower:]')]=true
+            done
+        fi
         shift
         ;;
         --help)
             show_help
             ;;
         *)
+        # Ignore unknown flags or handle error
         ;;
     esac
 done
+
+# Check if anything was actually selected
+if [ "$INSTALL_ALL" = false ] && [ ${#SELECTED[@]} -eq 0 ]; then
+    echo "Error: No languages specified."
+    show_help
+fi
 
 should_install() {
     [[ "$INSTALL_ALL" == "true" ]] && return 0
@@ -73,7 +89,7 @@ else
     exit 1
 fi
 
-# --- 4. Base Build Essentials (Always Installed) ---
+# --- 4. Base Build Essentials (Always Installed if any language is chosen) ---
 echo ">> Installing Base Build Tools..."
 if [ "$OS" == "arch" ]; then
     $PKG_MAN base-devel git curl wget unzip tar xz lld
@@ -114,7 +130,6 @@ if should_install "repo"; then
     if [ "$OS" == "arch" ]; then
         $PKG_MAN jdk-openjdk julia ocaml python-psutil chezscheme tcc go
     else
-        # Note: Java version bumped to a current LTS if 26 is unavailable
         $PKG_MAN openjdk-21-jdk julia ocaml python3-psutil chezscheme tcc golang-go
     fi
 fi
@@ -192,7 +207,6 @@ fi
 # --- 12. Vox (Build from source) ---
 if should_install "vox"; then
     echo ">> Building Vox..."
-    # Vox requires LDC (D compiler)
     if [ "$OS" == "arch" ]; then $PKG_MAN ldc; else $PKG_MAN ldc; fi
 
     VOX_TMP=$(mktemp -d)
@@ -206,7 +220,7 @@ fi
 
 # --- Finalization ---
 echo "--------------------------------------------------------"
-echo "✅ Installation cycle complete for $OS!"
+echo "✅ Requested installations complete for $OS!"
 echo "--------------------------------------------------------"
 echo "IMPORTANT: Ensure your PATH includes these directories:"
 echo 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.nimble/bin:$PATH"'
