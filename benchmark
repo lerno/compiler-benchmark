@@ -427,6 +427,10 @@ def bm_C_using_tcc(results: Results, lang: str, code_paths: list, args: argparse
 
 
 def bm_C_using_cuik(results: Results, lang: str, code_paths: list, args: argparse.Namespace, op: str, templated: bool):
+    cexe = match_lang_cexe(args, lang, 'cuik')
+    if not cexe:
+        return
+
     if op == 'check':
         cexe_flags = ['-c', '-xe']
         out_flag_and_exe = []
@@ -438,20 +442,19 @@ def bm_C_using_cuik(results: Results, lang: str, code_paths: list, args: argpars
         out_flag_and_exe = ['-o', out_binary(lang)]
     else:
         return None
-    cexe = match_lang_cexe(args, lang, 'cuik')
-    if cexe:
-        version = "~master"
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=(op == 'build'),
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+
+    version = "~master"
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=(op == 'build'),
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def gcc_clang_op_flags(op, lang):
