@@ -95,7 +95,7 @@ else
     ${PKG_MAN} build-essential git curl wget unzip tar xz-utils software-properties-common lld
 fi
 
-# --- 5. GCC Suite (C, C++, Go, Ada, D) ---
+# GCC Suite (C, C++, Go, Ada, D)
 if should_install "gcc"; then
     echo ">> Installing GCC Suite..."
     if [ "$OS" == "arch" ]; then
