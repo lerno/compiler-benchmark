@@ -82,7 +82,6 @@ else
     exit 1
 fi
 
-# Base Build Essentials (Always Installed if any language is chosen)
 echo ">> Installing Base Build Tools..."
 if [ "$OS" == "arch" ]; then
     ${PKG_MAN} base-devel git curl wget unzip tar xz lld
