@@ -66,14 +66,14 @@ should_install() {
     return 1
 }
 
-# --- 2. Path & Environment Setup ---
+# Path & Environment Setup
 INSTALL_DIR="${HOME}/.local"
 BIN_DIR="${INSTALL_DIR}/bin"
 mkdir -p "$BIN_DIR"
 
 export PATH="${BIN_DIR}:${HOME}/.cargo/bin:${HOME}/.nimble/bin:${PATH}"
 
-# --- 3. OS Detection ---
+# OS Detection
 if [ -f /etc/arch-release ]; then
     OS="arch"
     PKG_MAN="sudo pacman -S --noconfirm --needed"
@@ -87,7 +87,7 @@ else
     exit 1
 fi
 
-# --- 4. Base Build Essentials (Always Installed if any language is chosen) ---
+# Base Build Essentials (Always Installed if any language is chosen)
 echo ">> Installing Base Build Tools..."
 if [ "$OS" == "arch" ]; then
     ${PKG_MAN} base-devel git curl wget unzip tar xz lld
