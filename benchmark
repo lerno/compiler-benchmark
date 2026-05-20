@@ -488,20 +488,21 @@ def bm_C_and_Cxx_using_gcc(results: Results, lang, code_paths, args: argparse.Na
             cexe = match_lang_cexe(args, lang, 'g++' + str(gcc_version))
         else:
             return None
-        if cexe:
-            output = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout
-            version = output.decode('utf-8').split()[2].split('-')[0]
-            compile_file(code_paths,
-                         out_flag_and_exe=out_flag_and_exe,
-                         cexe=cexe,
-                         runner=True,
-                         cexe_flags=cexe_flags + FLAGS,
-                         args=args,
-                         op=op,
-                         compiler_version=version,
-                         lang=lang,
-                         templated=templated,
-                         results=results)
+        if not cexe:
+            continue
+        output = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout
+        version = output.decode('utf-8').split()[2].split('-')[0]
+        compile_file(code_paths,
+                     out_flag_and_exe=out_flag_and_exe,
+                     cexe=cexe,
+                     runner=True,
+                     cexe_flags=cexe_flags + FLAGS,
+                     args=args,
+                     op=op,
+                     compiler_version=version,
+                     lang=lang,
+                     templated=templated,
+                     results=results)
 
 
 def bm_C_and_Cxx_using_clang(results: Results, lang, code_paths, args: argparse.Namespace, op, templated: bool):
