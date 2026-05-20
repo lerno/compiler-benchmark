@@ -14,11 +14,11 @@ show_help() {
     echo "  --help              Show this help message."
     echo ""
     echo "Available Language Keys:"
-    echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox, cproc"
+    echo "  gcc, llvm, repo, csharp, dmd, rust, nim, c3, vlang, zig, circle, swift, vox, cproc, cuik, pareas"
     echo ""
     echo "Examples:"
     echo "  $0 --languages=all"
-    echo "  $0 --languages=zig,rust,c3,cproc"
+    echo "  $0 --languages=zig,rust,pareas,cproc"
     exit 0
 }
 
@@ -133,6 +133,7 @@ if should_install "csharp"; then
     fi
 fi
 
+# --- DMD ---
 if should_install "dmd"; then
     echo ">> Installing DMD..."
     if [ "$OS" == "arch" ]; then
@@ -145,40 +146,46 @@ if should_install "dmd"; then
     fi
 fi
 
+# --- Nim ---
 if should_install "nim"; then
     echo ">> Installing Nim..."
     if [ "$OS" == "arch" ]; then
-        ${PKG_MAN} nim
+		${PKG_MAN} nim;
 	else
-		curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+		curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y;
 	fi
 fi
 
+# --- Rust ---
 if should_install "rust"; then
     echo ">> Installing Rust..."
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
 fi
 
+# --- C3 ---
 if should_install "c3"; then
     echo ">> Installing C3..."
-    curl -fsSL https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh | C3_VERSION=0.7.8 bash
+    curl -fsSL https://raw.githubusercontent.com/c3lang/c3c/refs/heads/master/install/install.sh | C3_VERSION=0.8.1 bash
 fi
 
+# --- Vlang ---
 if should_install "vlang"; then
     echo ">> Installing Vlang..."
     V_ZIP=$(mktemp /tmp/vlang.XXXXXX.zip)
     curl -s -L -o "$V_ZIP" "https://github.com/vlang/v/releases/latest/download/v_linux.zip"
     unzip -o -qq "$V_ZIP" -d "$INSTALL_DIR"
+    ln -sf "$INSTALL_DIR/v/v" "$BIN_DIR/v"
     rm "$V_ZIP"
 fi
 
+# --- Zig ---
 if should_install "zig"; then
     echo ">> Installing Zig..."
     if [ "$OS" == "arch" ]; then
         ${PKG_MAN} zig
     else
-		ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
-		wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
+        ZIG_URL=$(curl -s https://ziglang.org/download/index.json | grep -oP '"tarball":\s*"\Khttps://ziglang.org/builds/zig-linux-x86_64-[^"]+' | head -n 1)
+        wget -q --show-progress -c "$ZIG_URL" -O - | tar -xJ -C "$INSTALL_DIR"
     fi
 fi
 
@@ -201,10 +208,10 @@ if should_install "swift"; then
     fi
 fi
 
+# --- Vox ---
 if should_install "vox"; then
     echo ">> Building Vox..."
     if [ "$OS" == "arch" ]; then ${PKG_MAN} ldc; else ${PKG_MAN} ldc; fi
-
     VOX_TMP=$(mktemp -d)
     git clone --depth 1 https://github.com/MrSmith33/vox "$VOX_TMP"
     pushd "$VOX_TMP/source"
@@ -214,51 +221,7 @@ if should_install "vox"; then
     rm -rf "$VOX_TMP"
 fi
 
+# --- CProc ---
 if should_install "cproc"; then
     echo ">> Building cproc..."
-    echo ">> Installing QBE (dependency for cproc)..."
-    if [ "$OS" == "arch" ]; then
-        ${PKG_MAN} qbe
-    else
-        # For Ubuntu, qbe is available in 22.04+
-        ${PKG_MAN} qbe || {
-            echo "QBE not found in repos, building from source..."
-            QBE_TMP=$(mktemp -d)
-            git clone --depth 1 git://c3d.libre.cc/qbe.git "$QBE_TMP"
-            make -C "$QBE_TMP"
-            cp "$QBE_TMP/qbe" "$BIN_DIR/"
-            rm -rf "$QBE_TMP"
-        }
-    fi
-    CPROC_TMP=$(mktemp -d)
-    git clone --depth 1 https://github.com/michaelforney/cproc "$CPROC_TMP"
-    pushd "$CPROC_TMP"
-    ./configure --prefix="$INSTALL_DIR"
-    make
-    make install
-    popd
-    rm -rf "$CPROC_TMP"
-fi
-
-if should_install "cuik"; then
-    echo ">> Building Cuik..."
-    CUIK_TMP=$(mktemp -d)
-    git clone --depth 1 https://github.com/RealNeGate/Cuik/ "$CUIK_TMP"
-    pushd "$CUIK_TMP"
-	sed -i 's/-Werror//g' build.lua
-	find . -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/__debugbreak/__builtin_trap/g' {} +
-	sed -i '1i #include <ctype.h>' common/common.c
-	sed -i '1i #include <ctype.h>' tb/x64/x64_gen.h
-	sed -i '1i #include <stddef.h>' tb/libtb.c
-	sed -i 's/static TB_Node\* make_int_node/TB_Node\* make_int_node/g' tb/new_builder.c
-	CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" \
-		  luajit build.lua -x64 -driver -cuik -tb
-	popd
-fi
-
-# --- Finalization ---
-echo "--------------------------------------------------------"
-echo "✅ Requested installations complete for $OS!"
-echo "--------------------------------------------------------"
-echo "IMPORTANT: Ensure your PATH includes these directories:"
-echo 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.nimble/bin:$PATH"'
+    if [ "$OS" == "arch" ]; then ${PKG_MAN} qbe; else ${PKG_MAN} qbe || echo "QBE build needed"; fi
