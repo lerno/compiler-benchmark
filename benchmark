@@ -616,6 +616,9 @@ def bm_D(results: Results, code_paths, args: argparse.Namespace, op, templated: 
 
 def bm_Vox(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'Vox'
+    cexe = match_lang_cexe(args, lang, 'vox')
+    if not cexe:
+        return
     if op == 'check':
         cexe_flags = ['--check-only']
         out_flag_and_exe = []
@@ -626,19 +629,17 @@ def bm_Vox(results: Results, code_paths, args: argparse.Namespace, op, templated
         out_flag_and_exe = ['--of=' + out_binary(lang)]
     else:
         return None
-    cexe = match_lang_cexe(args, lang, 'vox')
-    if cexe:
-        compile_file(code_paths,
-                     out_flag_and_exe=out_flag_and_exe,
-                     cexe=cexe,
-                     runner=True,  # os.name == 'nt', # only on Windows for now. TODO https://forum.dlang.org/post/cjbaiikzfbqkjqoukljc@forum.dlang.org
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version='master',  # TODO lookup Git version
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    compile_file(code_paths,
+                 out_flag_and_exe=out_flag_and_exe,
+                 cexe=cexe,
+                 runner=True,  # os.name == 'nt', # only on Windows for now. TODO https://forum.dlang.org/post/cjbaiikzfbqkjqoukljc@forum.dlang.org
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version='master',  # TODO lookup Git version
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_CSharp_using_mono(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
