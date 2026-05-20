@@ -451,7 +451,7 @@ def bm_C_using_cuik(results: Results, lang: str, code_paths: list, args: argpars
 def gcc_clang_op_flags(op, lang):
     if op == 'check':
         cexe_flags = ['-fsyntax-only']
-        out_flag_and_exe = []
+        out_flag_and_exe = [] # Use ['-o', '/dev/null'] to silence warnings if needed
     elif op == 'compile':
         cexe_flags = ['-c']
         out_flag_and_exe = []
@@ -1659,11 +1659,10 @@ def generate_test_function_definition(args: argparse.Namespace, lang: str, typ, 
     elif lang in ['java']:
         fil.write(Tm('    static ${T} ${F}(${T} x) { return ${X}; }\n').substitute(T=typ, F=str(fname), N=nconst, H=str(fheight), X=expr))
     elif lang in ['c++']:
-        fil.write(Tm('${M}${T} ${F}($$T x) { return ${X}; }\n')
+        fil.write(Tm('${M}${T} ${F}($T x) { return ${X}; }\n')
                 .substitute(T=typ, F=str(fname), N=nconst, H=str(fheight),
                             M='template<typename T=int> ' if templated else '',
                             X=expr))
-        # template<typename T1, typename T2 = int> class A;
     elif lang in ('d', 'vox'):
         # See: https://forum.dlang.org/post/sfldpxiieahuiizvgjeb@forum.dlang.org
         fil.write(Tm('${T} ${F}${M}(${T} x)${Q} { return ${X}; }\n')
