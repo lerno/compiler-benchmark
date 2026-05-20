@@ -362,6 +362,7 @@ def bm_C_using_cproc(results: Results, lang: str, code_paths: list, args: argpar
     cexe = match_lang_cexe(args, lang, 'cproc')
     if not cexe:
         return
+
     if op == 'check':
         cexe_flags = ['-emit-qbe']
         out_flag_and_exe = ['-o', '/dev/null']
@@ -380,7 +381,7 @@ def bm_C_using_cproc(results: Results, lang: str, code_paths: list, args: argpar
         # return False
     else:
         return None
-    version = 'unknown'
+
     compile_file(code_paths,
                  out_flag_and_exe=out_flag_and_exe,
                  cexe=cexe,
@@ -388,7 +389,7 @@ def bm_C_using_cproc(results: Results, lang: str, code_paths: list, args: argpar
                  cexe_flags=cexe_flags,
                  args=args,
                  op=op,
-                 compiler_version=version,
+                 compiler_version='unknown',
                  lang=lang,
                  templated=templated,
                  results=results)
