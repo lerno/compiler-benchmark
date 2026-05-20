@@ -1483,9 +1483,9 @@ def generate_test_language_specific_prefix(lang: str, program_name, fil, templat
         fil.write('import sys\n\n')
     elif lang == 'c3':
         if templated:
-            fil.write('module main<T>;\n\n')
+            fil.write('module calc<T>;\n\n')
         else:
-            fil.write('module main;\n\n')
+            fil.write('module calc;\n\n')
     elif lang == 'vox':
         fil.write('''enum u32 stdin = 0;
 enum u32 stdout = 1;
@@ -1774,6 +1774,8 @@ def generate_test_main_header(lang: str, types: list, fil, templated: bool):
     elif lang == 'zig':
         fil.write(Tm('pub fn main() void {\n').substitute(T=types[0]))
     elif lang == 'c3':
+        fil.write('module main;\n\n')
+        fil.write('import calc;\n\n')
         fil.write(Tm('fn int main(String[] args) {\n').substitute(T=types[0]))
     elif lang == 'go':
         fil.write(Tm('func main() {\n').substitute(T=types[0]))
