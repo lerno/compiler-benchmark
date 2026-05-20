@@ -5,7 +5,6 @@
 
 set -euo pipefail
 
-# --- 1. Argument Parsing & Help ---
 show_help() {
     echo "Usage: $0 --languages=[LIST|all]"
     echo ""
@@ -23,7 +22,6 @@ show_help() {
     exit 0
 }
 
-# Default: Install nothing unless specified
 INSTALL_ALL=false
 declare -A SELECTED
 
@@ -54,7 +52,6 @@ for i in "$@"; do
     esac
 done
 
-# Check if anything was actually selected
 if [ "$INSTALL_ALL" = false ] && [ ${#SELECTED[@]} -eq 0 ]; then
     echo "Error: No languages specified."
     show_help
@@ -66,14 +63,12 @@ should_install() {
     return 1
 }
 
-# Path & Environment Setup
 INSTALL_DIR="${HOME}/.local"
 BIN_DIR="${INSTALL_DIR}/bin"
 mkdir -p "$BIN_DIR"
 
 export PATH="${BIN_DIR}:${HOME}/.cargo/bin:${HOME}/.nimble/bin:${PATH}"
 
-# OS Detection
 if [ -f /etc/arch-release ]; then
     OS="arch"
     PKG_MAN="sudo pacman -S --noconfirm --needed"
