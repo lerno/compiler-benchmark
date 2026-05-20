@@ -1275,7 +1275,8 @@ def compile_file(code_paths: list,
             outs, errs = pt.comp_proc.communicate()
         os.chdir(cwd)           # restore
 
-        if pt.comp_proc.returncode != 0:
+        # For 'run' operations, the exit code is often the result (e.g. 244), not an error.
+        if pt.comp_proc.returncode != 0 and op != 'run':
             print("WARNING: Compilation `" + ' '.join([cexe] + cexe_flags) +
                   "` of source file `" + src_name +
                   "` exited with return code " + str(pt.comp_proc.returncode) +
