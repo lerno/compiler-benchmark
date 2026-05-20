@@ -107,7 +107,7 @@ The numerical constants are randomized using a new seed upon every
 call. This makes it impossible for any compiler to utilize any caching
 mechanism upon successive calls with same flags that affect the source
 generation. The purpose of this is to make the comparison between
-compilers with and without (different levels) caching more fair.
+compilers with and without (different levels of) caching more fair.
 
 The caching of the Go reference compiler `go`, for instance, is effectively
 disabled by this randomization.
