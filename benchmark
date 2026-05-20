@@ -654,10 +654,11 @@ def bm_CSharp_using_mcs(results: Results, code_paths, args: argparse.Namespace, 
     cexe_flags = ['-target:exe']
 
     # Handle 'check' operation for mcs
+    check_temp_file = None
     if op == 'check':
-        # Direct output to the null device to simulate a syntax/type check
-        null_device = 'NUL' if os.name == 'nt' else '/dev/null'
-        out_flag = ['-out:' + null_device]
+        # Create a dummy filename for the check operation
+        check_temp_file = out_binary(lang) + ".check_tmp"
+        out_flag = ['-out:' + check_temp_file]
     else:
         out_flag = ['-out:' + out_binary(lang)]
 
@@ -666,20 +667,28 @@ def bm_CSharp_using_mcs(results: Results, code_paths, args: argparse.Namespace, 
         version_output = sp.run([cexe, '--version'], stdout=sp.PIPE, stderr=sp.STDOUT).stdout.decode('utf-8')
         # mcs version string is usually: "Mono C# compiler version X.X.X.X"
         version = version_output.split()[4]
-    except:
+    except (IndexError, sp.CalledProcessError, Exception):
         version = "unknown"
 
-    compile_file(code_paths,
-                 out_flag_and_exe=out_flag,
-                 cexe=cexe,
-                 runner=True,
-                 cexe_flags=cexe_flags,
-                 args=args,
-                 op=op,
-                 compiler_version=version,
-                 lang=lang,
-                 templated=templated,
-                 results=results)
+    try:
+        compile_file(code_paths,
+                     out_flag_and_exe=out_flag,
+                     cexe=cexe,
+                     runner=True,
+                     cexe_flags=cexe_flags,
+                     args=args,
+                     op=op,
+                     compiler_version=version,
+                     lang=lang,
+                     templated=templated,
+                     results=results)
+    finally:
+        # Cleanup: Remove the temporary file created by the 'check' operation
+        if check_temp_file and os.path.exists(check_temp_file):
+            try:
+                os.remove(check_temp_file)
+            except OSError:
+                pass
 
 
 def bm_CSharp_using_csc(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
