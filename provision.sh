@@ -249,6 +249,7 @@ if should_install "cuik"; then
 	sed -i 's/static TB_Node\* make_int_node/TB_Node\* make_int_node/g' tb/new_builder.c
 	CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" \
 		  luajit build.lua -x64 -driver -cuik -tb
+	popd
 fi
 
 # --- Finalization ---
