@@ -842,27 +842,34 @@ def bm_V(results: Results, code_paths, args: argparse.Namespace, op, templated: 
                  templated=templated,
                  results=results)
 
-
 def bm_C3(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'C3'
     cexe = match_lang_cexe(args, lang, 'c3c')
     if not cexe:
         return
-    cexe_flags = ['-q', '-O0']
+
+    common_flags = ['-q', '-O0']
+
     if op == 'check':
-        cexe_flags += ['compile-only'] + ['-C']
+        cexe_flags = ['compile-only'] + common_flags + ['-C']
         out_flag_and_exe = []
+        runner = False
     elif op == 'compile':
-        cexe_flags += ['compile-only']
+        cexe_flags = ['compile-only'] + common_flags
         out_flag_and_exe = []
-    else:
-        cexe_flags += ['compile']
+        runner = False
+    elif op == 'build':
+        cexe_flags = ['compile'] + common_flags
         out_flag_and_exe = ['-o', out_binary(lang)]
+        runner = True
+    else:
+        return
+
     version = sp.run([cexe, '--version'], stdout=sp.PIPE).stdout.decode('utf-8').split(':')[1].split()[0]
     compile_file(code_paths,
                  out_flag_and_exe=out_flag_and_exe,
                  cexe=cexe,
-                 runner=True,
+                 runner=runner,
                  cexe_flags=cexe_flags,
                  args=args,
                  op=op,
@@ -1205,6 +1212,7 @@ def compile_file(code_paths: list,
     key: tuple = (lang, templated, cexe)
 
     lang_dir = out_directory(lang)
+    abs_lang_dir = os.path.abspath(lang_dir)  # compute before any chdir
 
     if key not in results:
         row = [None] * MARKDOWN_TABLE_LENGTH  # preallocate
