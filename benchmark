@@ -666,22 +666,22 @@ def bm_CSharp_using_mono(results: Results, code_paths, args: argparse.Namespace,
 
 def bm_CSharp_using_csc(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
     lang = 'C#'
-    cexe = match_lang_cexe(args, lang, 'mono-csc')
+    cexe = match_lang_cexe(args, lang, 'csc')
     if not cexe:
         return
-        cexe_flags = ['-target:exe'] + ([] if op == 'build' else [''])
-        version = sp.run([cexe, '-version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[0]
-        compile_file(code_paths,
-                     out_flag_and_exe=['-out:' + out_binary(lang)],
-                     cexe=cexe,
-                     runner=True,
-                     cexe_flags=cexe_flags,
-                     args=args,
-                     op=op,
-                     compiler_version=version,
-                     lang=lang,
-                     templated=templated,
-                     results=results)
+    cexe_flags = ['-target:exe'] + ([] if op == 'build' else [''])
+    version = sp.run([cexe, '-version'], stdout=sp.PIPE).stdout.decode('utf-8').split()[0]
+    compile_file(code_paths,
+                 out_flag_and_exe=['-out:' + out_binary(lang)],
+                 cexe=cexe,
+                 runner=True,
+                 cexe_flags=cexe_flags,
+                 args=args,
+                 op=op,
+                 compiler_version=version,
+                 lang=lang,
+                 templated=templated,
+                 results=results)
 
 
 def bm_Go(results: Results, code_paths, args: argparse.Namespace, op, templated: bool):
