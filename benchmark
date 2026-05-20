@@ -570,7 +570,7 @@ def bm_D(results: Results, code_paths, args: argparse.Namespace, op, templated: 
 
     # dmd
     for cexe in filter(lambda cexe: which(cexe), exes):
-        if not which(cexe):
+        if not cexe or not which(cexe):
             continue
         if cexe.startswith('dmd'):
             version = get_version(sp.run([cexe, '--version'], stdout=sp.PIPE))
