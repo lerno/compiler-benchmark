@@ -242,7 +242,9 @@ if should_install "cuik"; then
     git clone --depth 1 https://github.com/RealNeGate/Cuik/ "$CUIK_TMP"
     pushd "$CUIK_TMP"
 	sed -i '1i #include <ctype.h>' common/common.c
+	sed -i '1i #include <ctype.h>' tb/x64/x64_gen.h
 	sed -i '1i #include <stddef.h>' tb/libtb.c
+	sed -i 's/static TB_Node\* make_int_node/TB_Node\* make_int_node/g' tb/new_builder.c
 	CFLAGS="-D__debugbreak=__builtin_trap -include ctype.h" \
 		  luajit build.lua -x64 -driver -cuik -tb
 fi
