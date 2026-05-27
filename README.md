@@ -273,11 +273,13 @@ results in the following table (copied from the output at the end).
 
 ## TODO
 
+- Add C source backend to C3.
+- Add Lua (luajit).
+- Add language Fortran.
+- Add language Pony.
 - Add function `benchmark_CSharp_using_dotnet()` that calls `dotnet build`. On
   my Ubuntu 22.04, both `dotnet new` and `dotnet build` segfaults so won’t waste
   time with this for now.
-- Add language Fortran.
-- Add language Pony.
 - Sort table primarily by build time and then check time.
 - Don’t include Build Time and Build RSS columns when build op is not used.
 - Don’t include Check Time and Check RSS columns when check op is not used.
