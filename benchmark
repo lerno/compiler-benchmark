@@ -888,7 +888,7 @@ def bm_C3(results: Results, code_paths, args: argparse.Namespace, op, templated:
     if not cexe:
         return
 
-    common_flags = ['-q', '-O0']
+    common_flags = ['-q', '-O0', '--use-stdlib=no']
 
     if op == 'check':
         cexe_flags = ['compile-only'] + common_flags + ['-C']
